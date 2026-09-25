@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Aghosh Sheikhupura MIS
 
-## Getting Started
+Management Information System for Alkhidmat Foundation's Aghosh Sheikhupura branch. It covers inventory, demand sheets, the vehicle log and printable reports, with a bilingual English / Urdu (RTL) interface.
 
-First, run the development server:
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000. The first visit shows **First-time setup**, where you create the administrator account. That form works only while no users exist.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+With no `DATABASE_URL`, the app uses an embedded PostgreSQL (PGlite) stored in `./.data/pglite`. This is fine for development. Only one process can open that folder at a time, so stop `next dev` before running `npm run db:migrate` against it. To reset the local database, stop the server and delete `.data/`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+For production, point the app at a real PostgreSQL 14+ server:
 
-## Learn More
+```bash
+cp .env.example .env    # set DATABASE_URL and CRON_SECRET
+npm run db:migrate      # optional: the app also migrates on the first request
+npm run build && npm start
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Modules
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Area | What it does |
+|---|---|
+| Dashboard | KPIs; stock alerts (below minimum, or expected to reach it within the alert horizon plus the item's lead time, based on average daily consumption); unfulfilled demands due within N days (including overdue ones), with shortfall; vehicles currently out |
+| Inventory | Item master (English and Urdu names, category, unit, default vendor, minimum level, lead time); receive stock with its source (General Donation, Alkhidmat Grant, Zakat…); issue stock to a department, optionally against a demand line; admin-only adjustments; entries are voided, never deleted |
+| Demand sheets | Draft → submitted → approved (admin) → partially fulfilled / fulfilled; quantities split by Boys and Girls; stock issued from the sheet; printable demand form |
+| Fleet | Start and close trips (vehicle, driver, department, purpose, time out/in, start/end km; km driven is calculated); a vehicle can have only one open trip; odometer continuity check; fuel log for km/litre |
+| Reports | Stock summary, item ledger, receipts by source, consumption by department, low stock, demand status, trip log, vehicle usage & mileage, km by department. Filters: date range, vehicle, department, km range, item, category, source, status. Every report can be printed (A4, letterhead, filters, signature lines) or exported to CSV |
+| Administration | Users and roles, master data (categories, units, vendors, departments, sources, vehicles, drivers), alert settings, audit log |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Roles.** An **Admin** has full access. **Staff / Manager** covers day-to-day work: receive and issue stock, create demands, log trips and fuel, and run reports. Staff can't adjust or void stock entries, approve demands, edit closed trips, change item minimum levels, or manage users, master data or settings.
 
-## Deploy on Vercel
+## Project layout
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+db/migrations/        SQL schema, views and reference data (applied in order, tracked in _migrations)
+proxy.ts              locale prefix + optimistic login redirect (real checks live in lib/dal)
+lib/db/               pg / PGlite driver, query helpers, migrations runner
+lib/dal/              server-only data access; requireUser()/requireAdmin() guard every page and action
+lib/actions/          Server Actions (all mutations), validated with zod
+lib/reports.ts        report registry: one definition drives the screen, print page and CSV export
+lib/master.ts         config for the generic master-data screens
+lib/i18n/             en.ts / ur.ts dictionaries, formatters (Western digits, dd/MM/yyyy, Asia/Karachi)
+app/[locale]/(app)/   authenticated screens
+app/[locale]/print/   print-only layouts (reports, demand sheet)
+app/api/              CSV export, daily-alerts JSON for a scheduler
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Notes
+
+- **Timezone.** "Today", overdue calculations and timestamps use `APP_TIMEZONE` (default `Asia/Karachi`).
+- **Printing.** Uses the browser's print dialog, which shapes Nastaliq correctly. Choose "Save as PDF" to get a PDF. Wide reports switch to A4 landscape automatically.
+- **Daily alerts.** `GET /api/cron/daily-alerts` with `Authorization: Bearer $CRON_SECRET` returns the day's stock alerts and due demands as JSON, ready to hook into email or WhatsApp later.
+- **Backups.** In production, schedule a nightly `pg_dump` to off-site storage.

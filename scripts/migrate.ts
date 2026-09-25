@@ -8,4 +8,4 @@ getDriver()
     console.error(err);
     process.exitCode = 1;
   })
-  .finally(closeDb);
+  .finally(() => closeDb().finally(() => process.exit()));

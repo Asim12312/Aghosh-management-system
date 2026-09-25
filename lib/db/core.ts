@@ -9,10 +9,15 @@ export interface Queryable {
   query<T = Row>(text: string, params?: unknown[]): Promise<T[]>;
 }
 
+/** Inside a transaction: parameterised queries plus multi-statement scripts. */
+export interface TxQueryable extends Queryable {
+  exec(sql: string): Promise<void>;
+}
+
 interface Driver extends Queryable {
   /** Runs a multi-statement SQL script (no parameters). */
   exec(sql: string): Promise<void>;
-  transaction<T>(fn: (q: Queryable) => Promise<T>): Promise<T>;
+  transaction<T>(fn: (q: TxQueryable) => Promise<T>): Promise<T>;
   close(): Promise<void>;
 }
 
@@ -37,13 +42,16 @@ async function createPgDriver(url: string): Promise<Driver> {
     async exec(sql: string) {
       await pool.query(sql);
     },
-    async transaction<T>(fn: (q: Queryable) => Promise<T>) {
+    async transaction<T>(fn: (q: TxQueryable) => Promise<T>) {
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
         const result = await fn({
           query: async <R>(text: string, params: unknown[] = []) =>
             (await client.query(text, params)).rows as R[],
+          exec: async (sql: string) => {
+            await client.query(sql);
+          },
         });
         await client.query("COMMIT");
         return result;
@@ -77,28 +85,45 @@ async function createPgliteDriver(): Promise<Driver> {
     async exec(sql: string) {
       await db.exec(sql);
     },
-    async transaction<T>(fn: (q: Queryable) => Promise<T>) {
+    async transaction<T>(fn: (q: TxQueryable) => Promise<T>) {
       return db.transaction(async (t) =>
-        fn({ query: async <R>(text: string, params: unknown[] = []) => (await t.query(text, params)).rows as R[] }),
+        fn({
+          query: async <R>(text: string, params: unknown[] = []) => (await t.query(text, params)).rows as R[],
+          exec: async (sql: string) => {
+            await t.exec(sql);
+          },
+        }),
       );
     },
     close: () => db.close(),
   };
 }
 
+// Serialises migrations/seeding when several server instances cold-start at once (e.g. on Vercel).
+const MIGRATION_LOCK = 724301;
+
 async function runMigrations(driver: Driver) {
-  await driver.exec(
-    "CREATE TABLE IF NOT EXISTS _migrations (name text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())",
-  );
   const dir = path.join(process.cwd(), "db", "migrations");
   const files = fs.readdirSync(dir).filter((f) => f.endsWith(".sql")).sort();
-  const applied = new Set((await driver.query<{ name: string }>("SELECT name FROM _migrations")).map((r) => r.name));
-  for (const file of files) {
-    if (applied.has(file)) continue;
-    const sql = fs.readFileSync(path.join(dir, file), "utf8");
-    const name = file.replace(/'/g, "''");
-    await driver.exec(`BEGIN;\n${sql}\nINSERT INTO _migrations (name) VALUES ('${name}');\nCOMMIT;`);
-    console.log(`[db] applied migration ${file}`);
+  await driver.transaction(async (q) => {
+    await q.query("SELECT pg_advisory_xact_lock($1)", [MIGRATION_LOCK]);
+    await q.exec(
+      "CREATE TABLE IF NOT EXISTS _migrations (name text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())",
+    );
+    const applied = new Set((await q.query<{ name: string }>("SELECT name FROM _migrations")).map((r) => r.name));
+    for (const file of files) {
+      if (applied.has(file)) continue;
+      await q.exec(fs.readFileSync(path.join(dir, file), "utf8"));
+      await q.query("INSERT INTO _migrations (name) VALUES ($1)", [file]);
+      console.log(`[db] applied migration ${file}`);
+    }
+  });
+  if (process.env.SEED_DEMO_DATA === "true") {
+    const { seedDemoData } = await import("./seed-demo");
+    await driver.transaction(async (q) => {
+      await q.query("SELECT pg_advisory_xact_lock($1)", [MIGRATION_LOCK]);
+      await seedDemoData(q);
+    });
   }
 }
 

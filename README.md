@@ -21,6 +21,23 @@ npm run db:migrate      # optional: the app also migrates on the first request
 npm run build && npm start
 ```
 
+## Demo data (testing)
+
+Set `SEED_DEMO_DATA=true` and the app fills an **empty** database (no users yet) on its first request. It adds a month of stock movements, demand sheets, trips and fuel, with dates relative to today. It also creates two logins:
+
+| Role | Username | Password |
+|---|---|---|
+| Admin | `admin` | `Admin@12345` |
+| Staff | `staff` | `Staff@12345` |
+
+You can also load it manually with `npm run db:seed-demo`. The data lives in [db/seed/demo.sql](db/seed/demo.sql). Before going live, remove `SEED_DEMO_DATA`, start with a fresh database, and create real accounts.
+
+## Deploying on Vercel
+
+1. Create a hosted PostgreSQL database (Vercel → Storage → Neon, or Supabase) so that `DATABASE_URL` is set.
+2. Add the environment variables `APP_TIMEZONE=Asia/Karachi`, `NEXT_PUBLIC_APP_TIMEZONE=Asia/Karachi`, `CRON_SECRET` and, for testing, `SEED_DEMO_DATA=true`.
+3. Deploy. The first request creates the tables and, if enabled, loads the demo data.
+
 ## Modules
 
 | Area | What it does |

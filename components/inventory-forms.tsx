@@ -26,7 +26,6 @@ export function ItemForm({
     <ActionForm action={saveItem} className="space-y-5">
       {item && <input type="hidden" name="id" value={String(item.id)} />}
       <FormGrid cols={3}>
-        <TextField name="code" label={d.common.code} required dir="ltr" defaultValue={val("code")} placeholder="GRC-001" />
         <TextField name="name_en" label={d.common.nameEn} required defaultValue={val("name_en")} dir="ltr" />
         <TextField name="name_ur" label={d.common.nameUr} required defaultValue={val("name_ur")} dir="rtl" lang="ur" />
         <SelectField name="category_id" label={t.category} required options={categories} defaultValue={val("category_id")} />

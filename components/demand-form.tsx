@@ -55,7 +55,7 @@ export function DemandForm({
       <FormGrid cols={4}>
         <TextField name="created_on" label={t.createdOn} type="date" required defaultValue={demand?.created_on ?? today} />
         <TextField name="required_by" label={t.requiredBy} type="date" required defaultValue={demand?.required_by} min={today} />
-        <SelectField name="department_id" label={t.department} options={departments} defaultValue={demand?.department_id ?? undefined} />
+        <SelectField name="department_id" label={t.department} required options={departments} defaultValue={demand?.department_id ?? undefined} />
         <TextareaField name="purpose" label={t.purpose} defaultValue={demand?.purpose ?? undefined} rows={1} />
       </FormGrid>
 

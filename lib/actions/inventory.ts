@@ -3,12 +3,12 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { one, tx } from "@/lib/db";
+import { one, query, tx } from "@/lib/db";
 import { audit, requireAdmin, requireUser } from "@/lib/dal/auth";
 import { lockAndGetStock, refreshDemandStatus } from "@/lib/dal/stock";
 import { fmt, fmtNum } from "@/lib/i18n";
 import { getRequestDictionary } from "@/lib/i18n/server";
-import { fail, fieldsFor, isUniqueViolation, parseForm, success, type ActionState } from "@/lib/validation";
+import { fail, fieldsFor, parseForm, success, type ActionState } from "@/lib/validation";
 
 class UserError extends Error {
   constructor(
@@ -31,7 +31,6 @@ export async function saveItem(_: ActionState, formData: FormData): Promise<Acti
   const parsed = parseForm(
     z.object({
       id: f.optId,
-      code: f.str,
       name_en: f.str,
       name_ur: f.str,
       category_id: f.id,
@@ -51,53 +50,54 @@ export async function saveItem(_: ActionState, formData: FormData): Promise<Acti
   const v = parsed.data;
   const isAdmin = user.role === "admin";
 
-  try {
-    if (v.id) {
-      // Only admins may change stock thresholds or deactivate items.
-      await one(
-        `UPDATE items SET code=$1, name_en=$2, name_ur=$3, category_id=$4, unit_id=$5, default_vendor_id=$6,
-                reorder_qty=$7, is_perishable=$8, notes=$9, updated_at=now()
-                ${isAdmin ? ", min_stock_level=$11, lead_time_days=$12, is_active=$13" : ""}
-          WHERE id=$10`,
-        [
-          v.code,
-          v.name_en,
-          v.name_ur,
-          v.category_id,
-          v.unit_id,
-          v.default_vendor_id,
-          v.reorder_qty,
-          v.is_perishable,
-          v.notes,
-          v.id,
-          ...(isAdmin ? [v.min_stock_level ?? 0, Math.round(v.lead_time_days ?? 2), v.is_active] : []),
-        ],
-      );
-      await audit(user.id, "update", "items", v.id, v);
-    } else {
-      const row = await one<{ id: number }>(
-        `INSERT INTO items (code, name_en, name_ur, category_id, unit_id, default_vendor_id, min_stock_level, reorder_qty,
-                            lead_time_days, is_perishable, notes)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
-        [
-          v.code,
-          v.name_en,
-          v.name_ur,
-          v.category_id,
-          v.unit_id,
-          v.default_vendor_id,
-          v.min_stock_level ?? 0,
-          v.reorder_qty,
-          Math.round(v.lead_time_days ?? 2),
-          v.is_perishable,
-          v.notes,
-        ],
-      );
-      await audit(user.id, "create", "items", row!.id, v);
-    }
-  } catch (err) {
-    if (isUniqueViolation(err)) return fail(d.validation.fixErrors, { code: d.inventory.codeTaken });
-    throw err;
+  // Items are picked by name everywhere, so names must be unique.
+  const clash = await one<{ en: boolean }>(
+    `SELECT lower(name_en) = lower($1) AS en FROM items
+      WHERE (lower(name_en) = lower($1) OR name_ur = $2) AND id <> COALESCE($3, -1) LIMIT 1`,
+    [v.name_en, v.name_ur, v.id],
+  );
+  if (clash) return fail(d.validation.fixErrors, clash.en ? { name_en: d.inventory.nameTaken } : { name_ur: d.inventory.nameTaken });
+
+  if (v.id) {
+    // Only admins may change stock thresholds or deactivate items.
+    await one(
+      `UPDATE items SET name_en=$1, name_ur=$2, category_id=$3, unit_id=$4, default_vendor_id=$5,
+              reorder_qty=$6, is_perishable=$7, notes=$8, updated_at=now()
+              ${isAdmin ? ", min_stock_level=$10, lead_time_days=$11, is_active=$12" : ""}
+        WHERE id=$9`,
+      [
+        v.name_en,
+        v.name_ur,
+        v.category_id,
+        v.unit_id,
+        v.default_vendor_id,
+        v.reorder_qty,
+        v.is_perishable,
+        v.notes,
+        v.id,
+        ...(isAdmin ? [v.min_stock_level ?? 0, Math.round(v.lead_time_days ?? 2), v.is_active] : []),
+      ],
+    );
+    await audit(user.id, "update", "items", v.id, v);
+  } else {
+    const row = await one<{ id: number }>(
+      `INSERT INTO items (name_en, name_ur, category_id, unit_id, default_vendor_id, min_stock_level, reorder_qty,
+                          lead_time_days, is_perishable, notes)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
+      [
+        v.name_en,
+        v.name_ur,
+        v.category_id,
+        v.unit_id,
+        v.default_vendor_id,
+        v.min_stock_level ?? 0,
+        v.reorder_qty,
+        Math.round(v.lead_time_days ?? 2),
+        v.is_perishable,
+        v.notes,
+      ],
+    );
+    await audit(user.id, "create", "items", row!.id, v);
   }
   revalidateInventory(locale);
   redirect(`/${locale}/inventory/items?saved=1`);
@@ -308,4 +308,41 @@ export async function issueAgainstDemand(_: ActionState, formData: FormData): Pr
   }
   revalidateInventory(locale);
   return success(d.common.saved);
+}
+
+/** Issues every pending line of a demand (up to the stock available) and marks it fulfilled when complete. */
+export async function issueAllForDemand(_: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await requireUser();
+  const { locale, d } = await getRequestDictionary();
+  const demandId = Number(formData.get("id"));
+  const txnDate = String(formData.get("txn_date") || "") || new Date().toISOString().slice(0, 10);
+  const lines = await query<{ demand_item_id: number; qty_pending: number; current_stock: number; name_en: string; name_ur: string }>(
+    `SELECT u.demand_item_id, u.qty_pending, u.current_stock, i.name_en, i.name_ur
+       FROM v_upcoming_demands u JOIN items i ON i.id = u.item_id
+      WHERE u.demand_sheet_id = $1 AND u.status IN ('approved', 'partially_fulfilled')`,
+    [demandId],
+  );
+  if (!lines.length) return fail(d.demands.notEditable);
+  const short: string[] = [];
+  for (const l of lines) {
+    const qty = Math.min(l.qty_pending, l.current_stock);
+    if (qty < l.qty_pending) short.push(locale === "ur" ? l.name_ur : l.name_en);
+    if (qty <= 0) continue;
+    try {
+      await issueStock(user.id, d, {
+        item_id: null,
+        department_id: null,
+        demand_item_id: l.demand_item_id,
+        quantity: qty,
+        txn_date: txnDate,
+        issued_to: null,
+        remarks: null,
+      });
+    } catch (err) {
+      if (!(err instanceof UserError)) throw err;
+      return fail(Object.values(err.fieldErrors ?? {})[0] ?? err.message);
+    }
+  }
+  revalidateInventory(locale);
+  return short.length ? fail(fmt(d.demands.issuedExceptShort, { items: short.join("، ") })) : success(d.demands.allIssued);
 }

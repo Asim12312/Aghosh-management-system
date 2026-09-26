@@ -16,7 +16,7 @@ export default async function NewDemandPage({ params }: PageProps<"/[locale]/dem
         <DemandForm
           items={items.map((i) => ({
             value: i.id,
-            label: `${i.code} — ${nm(i, locale)}`,
+            label: nm(i, locale),
             unit: locale === "ur" ? i.unit_ur : i.unit_en,
             stock: i.current_stock,
           }))}

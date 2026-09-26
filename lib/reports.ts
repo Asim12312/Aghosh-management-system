@@ -84,7 +84,6 @@ const round = (v: number | null, digits = 2) => (v === null || !Number.isFinite(
 const sum = (rows: ReportRow[], key: string) => rows.reduce((acc, r) => acc + (Number(r[key]) || 0), 0);
 
 const C = {
-  code: { key: "code", label: { en: "Code", ur: "کوڈ" }, dir: "ltr" } as Column,
   item: { key: "item", label: { en: "Item", ur: "شے" } } as Column,
   category: { key: "category", label: { en: "Category", ur: "زمرہ" } } as Column,
   unit: { key: "unit", label: { en: "Unit", ur: "اکائی" } } as Column,
@@ -127,7 +126,6 @@ const stockSummary: ReportDef = {
     );
     return {
       columns: [
-        C.code,
         C.item,
         C.category,
         C.unit,
@@ -139,7 +137,6 @@ const stockSummary: ReportDef = {
         { key: "min", label: { en: "Minimum", ur: "کم از کم" }, format: "num" },
       ],
       rows: rows.map((r) => ({
-        code: r.code as string,
         item: pick(locale, r.name_en, r.name_ur),
         category: pick(locale, r.cat_en, r.cat_ur),
         unit: pick(locale, r.unit_en, r.unit_ur),
@@ -245,7 +242,6 @@ const receiptsBySource: ReportDef = {
     );
     const out = rows.map((r) => ({
       source: pick(locale, r.src_en, r.src_ur),
-      code: r.code as string,
       item: pick(locale, r.name_en, r.name_ur),
       qty: n(r.qty),
       unit: pick(locale, r.unit_en, r.unit_ur),
@@ -255,7 +251,6 @@ const receiptsBySource: ReportDef = {
     return {
       columns: [
         { key: "source", label: { en: "Source", ur: "ذریعہ" } },
-        C.code,
         C.item,
         { key: "qty", label: { en: "Quantity", ur: "مقدار" }, format: "num" },
         C.unit,
@@ -292,7 +287,6 @@ const consumptionByDepartment: ReportDef = {
     return {
       columns: [
         C.department,
-        C.code,
         C.item,
         { key: "qty", label: { en: "Quantity issued", ur: "جاری شدہ مقدار" }, format: "num" },
         C.unit,
@@ -300,7 +294,6 @@ const consumptionByDepartment: ReportDef = {
       ],
       rows: rows.map((r) => ({
         department: pick(locale, r.dept_en, r.dept_ur),
-        code: r.code as string,
         item: pick(locale, r.name_en, r.name_ur),
         qty: n(r.qty),
         unit: pick(locale, r.unit_en, r.unit_ur),
@@ -338,7 +331,6 @@ const lowStock: ReportDef = {
     } as const;
     return {
       columns: [
-        C.code,
         C.item,
         { key: "stock", label: { en: "In stock", ur: "موجود" }, format: "num" },
         { key: "min", label: { en: "Minimum", ur: "کم از کم" }, format: "num" },
@@ -354,7 +346,6 @@ const lowStock: ReportDef = {
         const min = Number(r.min_stock_level);
         const suggested = r.reorder_qty !== null ? Number(r.reorder_qty) : Math.max(min * 2 - stock, 0);
         return {
-          code: r.code as string,
           item: pick(locale, r.name_en, r.name_ur),
           stock,
           min,
@@ -398,7 +389,7 @@ const demandStatus: ReportDef = {
     const statuses: Record<string, L> = {
       draft: { en: "Draft", ur: "مسودہ" },
       submitted: { en: "Submitted", ur: "جمع شدہ" },
-      approved: { en: "Approved", ur: "منظور شدہ" },
+      approved: { en: "Confirmed", ur: "کنفرم شدہ" },
       partially_fulfilled: { en: "Partially fulfilled", ur: "جزوی مکمل" },
       fulfilled: { en: "Fulfilled", ur: "مکمل" },
       cancelled: { en: "Cancelled", ur: "منسوخ" },

@@ -43,7 +43,7 @@ export default async function TransactionsPage({ params, searchParams }: PagePro
             <select id="item" name="item" defaultValue={filters.itemId ?? ""} className={inputCls}>
               <option value="">{d.common.all}</option>
               {items.map((i) => (
-                <option key={i.id} value={i.id}>{i.code} — {nm(i, locale)}</option>
+                <option key={i.id} value={i.id}>{nm(i, locale)}</option>
               ))}
             </select>
           </div>

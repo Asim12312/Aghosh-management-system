@@ -25,7 +25,7 @@ export async function saveDemand(_: ActionState, formData: FormData): Promise<Ac
       id: f.optId,
       created_on: f.date,
       required_by: f.date,
-      department_id: f.optId,
+      department_id: f.id,
       purpose: f.optStr,
       lines: z.string().default("[]"),
       intent: z.enum(["draft", "submit"]).default("draft"),
@@ -46,7 +46,9 @@ export async function saveDemand(_: ActionState, formData: FormData): Promise<Ac
   if (lines.length === 0) return fail(d.demands.atLeastOneLine);
   if (new Set(lines.map((l) => l.item_id)).size !== lines.length) return fail(d.demands.duplicateItem);
 
-  const status = v.intent === "submit" ? "submitted" : "draft";
+  // No approval step: a confirmed demand is ready for issuing straight away.
+  const status = v.intent === "submit" ? "approved" : "draft";
+  const approver = status === "approved" ? user.id : null;
   let id: number;
   try {
     id = await tx(async (q) => {
@@ -62,8 +64,10 @@ export async function saveDemand(_: ActionState, formData: FormData): Promise<Ac
           (user.role === "admin" || existing.requested_by === user.id);
         if (!canEdit) throw new Error("NOT_EDITABLE");
         await q.query(
-          `UPDATE demand_sheets SET created_on=$1, required_by=$2, department_id=$3, purpose=$4, status=$5, updated_at=now() WHERE id=$6`,
-          [v.created_on, v.required_by, v.department_id, v.purpose, status, demandId],
+          `UPDATE demand_sheets SET created_on=$1, required_by=$2, department_id=$3, purpose=$4, status=$5, updated_at=now(),
+                  approved_by = $7, approved_at = CASE WHEN $7::bigint IS NULL THEN NULL ELSE now() END
+            WHERE id=$6`,
+          [v.created_on, v.required_by, v.department_id, v.purpose, status, demandId, approver],
         );
         await q.query("DELETE FROM demand_items WHERE demand_sheet_id = $1", [demandId]);
       } else {
@@ -74,9 +78,9 @@ export async function saveDemand(_: ActionState, formData: FormData): Promise<Ac
         );
         const demandNo = `DS-${year}-${String(seq.n).padStart(4, "0")}`;
         const [row] = await q.query<{ id: number }>(
-          `INSERT INTO demand_sheets (demand_no, created_on, required_by, department_id, purpose, status, requested_by)
-           VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
-          [demandNo, v.created_on, v.required_by, v.department_id, v.purpose, status, user.id],
+          `INSERT INTO demand_sheets (demand_no, created_on, required_by, department_id, purpose, status, requested_by, approved_by, approved_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8, CASE WHEN $8::bigint IS NULL THEN NULL ELSE now() END) RETURNING id`,
+          [demandNo, v.created_on, v.required_by, v.department_id, v.purpose, status, user.id, approver],
         );
         demandId = row.id;
       }
@@ -109,7 +113,7 @@ export async function changeDemandStatus(_: ActionState, formData: FormData): Pr
   const isOwner = demand.requested_by === user.id;
 
   let next: string | null = null;
-  if (op === "submit" && demand.status === "draft" && (isAdmin || isOwner)) next = "submitted";
+  if (op === "submit" && demand.status === "draft" && (isAdmin || isOwner)) next = "approved";
   else if (op === "approve" && demand.status === "submitted" && isAdmin) next = "approved";
   else if (op === "cancel" && !["fulfilled", "cancelled"].includes(demand.status) && (isAdmin || (isOwner && demand.status === "draft")))
     next = "cancelled";
@@ -124,7 +128,10 @@ export async function changeDemandStatus(_: ActionState, formData: FormData): Pr
       [id, next, user.id],
     );
     // An approved demand whose items were already issued goes straight to its real status.
-    if (next === "approved") await refreshDemandStatus(q, id);
+    if (next === "approved") {
+      await q.query("UPDATE demand_sheets SET approved_by = $2, approved_at = now() WHERE id = $1", [id, user.id]);
+      await refreshDemandStatus(q, id);
+    }
     await audit(user.id, op, "demand_sheets", id, { from: demand.status, to: next }, q);
   });
   revalidatePath(`/${locale}`, "layout");

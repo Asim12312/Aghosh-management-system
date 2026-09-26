@@ -25,7 +25,8 @@ export default async function MasterListPage({ params, searchParams }: PageProps
   const entity = getMasterEntity(key);
   if (!entity) notFound();
   const isAdmin = user.role === "admin";
-  const saved = (await searchParams).saved === "1";
+  const sp = await searchParams;
+  const saved = sp.saved === "1";
 
   const rows = await query(`SELECT * FROM ${entity.table} ORDER BY ${entity.hasActive ? "is_active DESC, " : ""}${entity.orderBy}`);
   const listFields = entity.fields.filter((f) => f.list);
@@ -36,6 +37,11 @@ export default async function MasterListPage({ params, searchParams }: PageProps
       {saved && (
         <div className="mb-4">
           <Alert tone="green">{d.common.saved}</Alert>
+        </div>
+      )}
+      {sp.deleted === "1" && (
+        <div className="mb-4">
+          <Alert tone="green">{d.common.deleted}</Alert>
         </div>
       )}
       {isAdmin && (

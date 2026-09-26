@@ -109,7 +109,7 @@ export function ReportFilterForm({
           <select id="rf-item" name="item" defaultValue={values.itemId ?? ""} className={inputCls}>
             <option value="">{d.common.select}</option>
             {lookups.items.map((i) => (
-              <option key={i.id} value={i.id}>{i.code} — {nm(i, locale)}</option>
+              <option key={i.id} value={i.id}>{nm(i, locale)}</option>
             ))}
           </select>
         </div>
@@ -166,7 +166,7 @@ export function describeFilters(filters: FilterKey[], f: ReportFilters, lookups:
   const parts: { label: string; value: string }[] = [];
   if (filters.includes("item") && f.itemId) {
     const item = lookups.items.find((i) => i.id === f.itemId);
-    if (item) parts.push({ label: r.item, value: `${item.code} — ${nm(item, locale)}` });
+    if (item) parts.push({ label: r.item, value: nm(item, locale) });
   }
   if (filters.includes("dateRange")) parts.push({ label: d.common.date, value: ltr(`${fmtDate(f.from)} – ${fmtDate(f.to)}`) });
   const named = (key: FilterKey, label: string, id: number | undefined, list: Named[]) => {

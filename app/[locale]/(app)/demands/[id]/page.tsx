@@ -2,8 +2,10 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/dal/auth";
 import { getDemand, statusTone } from "@/lib/dal/demands";
 import { fmtDate, fmtDateTime, fmtNum, getDictionary, nm, todayISO, type Locale } from "@/lib/i18n";
-import { DemandStatusButtons, IssueLineForm } from "@/components/demand-actions";
+import { DemandStatusButtons, IssueAllButton, IssueLineForm } from "@/components/demand-actions";
 import { DueBadge } from "@/components/due-badge";
+import { DeleteButton } from "@/components/delete-button";
+import { deleteDemand } from "@/lib/actions/delete";
 import { Badge, Card, LinkButton, PageHeader, Table, Td, Th } from "@/components/ui";
 
 export default async function DemandDetailPage({ params }: PageProps<"/[locale]/demands/[id]">) {
@@ -25,6 +27,7 @@ export default async function DemandDetailPage({ params }: PageProps<"/[locale]/
   if (!["fulfilled", "cancelled"].includes(h.status) && (isAdmin || (isOwner && h.status === "draft"))) ops.push("cancel");
   const canEdit = ["draft", "submitted"].includes(h.status) && (isAdmin || isOwner);
   const canIssue = ["approved", "partially_fulfilled"].includes(h.status);
+  const canDelete = (isAdmin && ["draft", "cancelled"].includes(h.status)) || (isOwner && h.status === "draft");
   const today = todayISO();
 
   return (
@@ -42,6 +45,7 @@ export default async function DemandDetailPage({ params }: PageProps<"/[locale]/
             <LinkButton href={`/${locale}/print/demands/${h.id}`} variant="secondary" target="_blank">
               {t.printForm}
             </LinkButton>
+            {canDelete && <DeleteButton action={deleteDemand} hidden={{ id: h.id }} />}
           </>
         }
       />
@@ -86,7 +90,12 @@ export default async function DemandDetailPage({ params }: PageProps<"/[locale]/
         )}
       </Card>
 
-      <Card title={t.lines} subtitle={canIssue ? t.issueTitle : undefined} bodyClassName="p-0">
+      <Card
+        title={t.lines}
+        subtitle={canIssue ? t.issueTitle : undefined}
+        bodyClassName="p-0"
+        actions={canIssue && <IssueAllButton id={h.id} today={today} />}
+      >
         <Table>
           <thead>
             <tr>
@@ -108,7 +117,7 @@ export default async function DemandDetailPage({ params }: PageProps<"/[locale]/
                 <tr key={l.id}>
                   <Td>
                     <div className="font-medium">{nm(l, locale)}</div>
-                    <div className="ltr-nums text-xs text-slate-400">{l.code} · {unit}</div>
+                    <div className="text-xs text-slate-400">{unit}</div>
                     {l.remarks && <div className="text-xs text-slate-500">{l.remarks}</div>}
                   </Td>
                   <Td numeric className="ltr-nums">{fmtNum(l.qty_boys)}</Td>

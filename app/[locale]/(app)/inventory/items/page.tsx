@@ -37,7 +37,7 @@ export default async function ItemsPage({ params, searchParams }: PageProps<"/[l
          JOIN units u ON u.id = i.unit_id
          JOIN v_item_stock s ON s.item_id = i.id
          LEFT JOIN v_stock_alerts a ON a.item_id = i.id
-        WHERE ($1::text = '' OR i.name_en ILIKE '%' || $1 || '%' OR i.name_ur ILIKE '%' || $1 || '%' OR i.code ILIKE '%' || $1 || '%')
+        WHERE ($1::text = '' OR i.name_en ILIKE '%' || $1 || '%' OR i.name_ur ILIKE '%' || $1 || '%')
           AND ($2::int IS NULL OR i.category_id = $2)
         ORDER BY i.is_active DESC, c.name_en, i.name_en`,
       [q, category],
@@ -56,6 +56,11 @@ export default async function ItemsPage({ params, searchParams }: PageProps<"/[l
       {sp.saved === "1" && (
         <div className="mb-4">
           <Alert tone="green">{d.common.saved}</Alert>
+        </div>
+      )}
+      {sp.deleted === "1" && (
+        <div className="mb-4">
+          <Alert tone="green">{d.common.deleted}</Alert>
         </div>
       )}
       <Card bodyClassName="p-0">
@@ -78,7 +83,6 @@ export default async function ItemsPage({ params, searchParams }: PageProps<"/[l
         <Table>
           <thead>
             <tr>
-              <Th>{d.common.code}</Th>
               <Th>{t.item}</Th>
               <Th>{t.category}</Th>
               <Th numeric>{t.currentStock}</Th>
@@ -88,10 +92,9 @@ export default async function ItemsPage({ params, searchParams }: PageProps<"/[l
             </tr>
           </thead>
           <tbody>
-            {items.length === 0 && <EmptyRow colSpan={7}>{d.common.noRecords}</EmptyRow>}
+            {items.length === 0 && <EmptyRow colSpan={6}>{d.common.noRecords}</EmptyRow>}
             {items.map((i) => (
               <tr key={i.id} className={i.is_active ? undefined : "text-slate-400"}>
-                <Td className="ltr-nums text-xs">{i.code}</Td>
                 <Td>
                   <Link href={`/${locale}/inventory/items/${i.id}`} className="font-medium text-brand-700 hover:underline">
                     {nm(i, locale)}

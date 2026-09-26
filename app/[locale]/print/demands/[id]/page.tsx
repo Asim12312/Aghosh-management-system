@@ -54,7 +54,7 @@ export default async function PrintDemandPage({ params }: PageProps<"/[locale]/p
             <tr key={l.id}>
               <Td className="ltr-nums">{i + 1}</Td>
               <Td>
-                {nm(l, locale)} <span className="ltr-nums text-xs text-slate-500">({l.code})</span>
+                {nm(l, locale)}
               </Td>
               <Td>{locale === "ur" ? l.unit_ur : l.unit_en}</Td>
               <Td numeric className="ltr-nums">{fmtNum(l.qty_boys)}</Td>

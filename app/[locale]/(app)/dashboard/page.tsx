@@ -161,7 +161,7 @@ export default async function DashboardPage({ params, searchParams }: PageProps<
               {demands.map((r, i) => (
                 <tr key={i}>
                   <Td>
-                    <Link href={`/${locale}/demands/${r.demand_sheet_id}`} className="ltr-nums font-medium text-brand-700 hover:underline">
+                    <Link href={`/${locale}/demands/${r.demand_sheet_id}`} className="ltr-nums font-medium whitespace-nowrap text-brand-700 hover:underline">
                       {r.demand_no}
                     </Link>
                     <div className="text-xs text-slate-500">{(ur ? r.dept_ur : r.dept_en) ?? ""}</div>

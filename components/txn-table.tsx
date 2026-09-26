@@ -51,7 +51,6 @@ export function TxnTable({
               )}
               <Td>
                 <div className="font-medium text-slate-800">{ur ? r.item_ur : r.item_en}</div>
-                <div className="ltr-nums text-xs text-slate-400">{r.item_code}</div>
                 {r.remarks && <div className="text-xs text-slate-500">{r.remarks}</div>}
                 {r.voided_at && r.void_reason && <div className="text-xs text-red-600 no-underline">{r.void_reason}</div>}
               </Td>

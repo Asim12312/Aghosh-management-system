@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { one } from "@/lib/db";
 import { getCurrentUser } from "@/lib/dal/auth";
@@ -5,6 +6,7 @@ import { getDictionary, type Locale } from "@/lib/i18n";
 import { login, setupAdmin } from "@/lib/actions/auth";
 import { ActionForm, SubmitButton, TextField } from "@/components/forms";
 import { LanguageToggle } from "@/components/language-toggle";
+import logo from "@/public/logo.webp";
 
 export default async function LoginPage({ params }: PageProps<"/[locale]/login">) {
   const locale = (await params).locale as Locale;
@@ -16,9 +18,7 @@ export default async function LoginPage({ params }: PageProps<"/[locale]/login">
     <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-brand-50 via-white to-slate-100 px-4 py-10">
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
-          <div className="mx-auto mb-3 flex size-14 items-center justify-center rounded-2xl bg-brand-700 text-2xl font-bold text-white shadow">
-            {locale === "ur" ? "آ" : "A"}
-          </div>
+          <Image src={logo} alt="Aghosh" height={112} className="mx-auto mb-3 h-28 w-auto rounded-xl shadow-sm" priority />
           <h1 className="text-xl font-semibold text-slate-900">{d.app.org}</h1>
           <p className="text-sm text-slate-500">{d.app.tagline}</p>
         </div>

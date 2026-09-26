@@ -4,7 +4,7 @@ import { getReportLookups } from "@/lib/dal/report-lookups";
 import { fmt, getDictionary, tl, type Locale } from "@/lib/i18n";
 import { filtersToQuery, getReport, parseReportFilters } from "@/lib/reports";
 import { ReportFilterForm, ReportTable } from "@/components/report-view";
-import { Card, LinkButton, PageHeader } from "@/components/ui";
+import { buttonCls, Card, LinkButton, PageHeader } from "@/components/ui";
 
 export default async function ReportPage({ params, searchParams }: PageProps<"/[locale]/reports/[report]">) {
   await requireUser();
@@ -29,9 +29,12 @@ export default async function ReportPage({ params, searchParams }: PageProps<"/[
               <LinkButton href={`/${locale}/print/reports/${def.key}?${qs}`} target="_blank">
                 🖨 {d.common.print}
               </LinkButton>
-              <LinkButton href={`/api/reports/${def.key}/export?${qs}&locale=${locale}`} variant="secondary">
+              <a href={`/api/reports/${def.key}/export?${qs}&locale=${locale}&format=xlsx`} download className={buttonCls("secondary")}>
+                ⬇ {d.common.exportExcel}
+              </a>
+              <a href={`/api/reports/${def.key}/export?${qs}&locale=${locale}&format=csv`} download className={buttonCls("ghost")}>
                 {d.common.exportCsv}
-              </LinkButton>
+              </a>
             </>
           )
         }

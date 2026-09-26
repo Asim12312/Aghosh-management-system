@@ -4,6 +4,8 @@ import { one, query } from "@/lib/db";
 import { getCategories, getUnits, getVendors, namedOptions } from "@/lib/dal/lookups";
 import { fmtDate, fmtNum, getDictionary, nm, type Locale } from "@/lib/i18n";
 import { ItemForm } from "@/components/inventory-forms";
+import { DeleteButton } from "@/components/delete-button";
+import { deleteItem } from "@/lib/actions/delete";
 import { Badge, Card, EmptyRow, LinkButton, PageHeader, Stat, Table, Td, Th } from "@/components/ui";
 
 export default async function ItemDetailPage({ params }: PageProps<"/[locale]/inventory/items/[id]">) {
@@ -59,11 +61,11 @@ export default async function ItemDetailPage({ params }: PageProps<"/[locale]/in
     <>
       <PageHeader
         title={nm(item, locale)}
-        subtitle={item.code}
         actions={
           <>
             <LinkButton href={`/${locale}/inventory/stock-in?item=${id}`} variant="secondary">{d.nav.stockIn}</LinkButton>
             <LinkButton href={`/${locale}/inventory/stock-out?item=${id}`} variant="secondary">{d.nav.stockOut}</LinkButton>
+            {user.role === "admin" && <DeleteButton action={deleteItem} hidden={{ id: Number(id) }} />}
           </>
         }
       />

@@ -5,6 +5,8 @@ import { getLastReadings } from "@/lib/dal/fleet";
 import { driverOptions, getDepartments, getDrivers, getVehicles, namedOptions, vehicleOptions } from "@/lib/dal/lookups";
 import { getDictionary, nowLocalInput, type Locale } from "@/lib/i18n";
 import { TripForm, type TripValues } from "@/components/fleet-forms";
+import { DeleteButton } from "@/components/delete-button";
+import { deleteTrip } from "@/lib/actions/delete";
 import { Card, PageHeader } from "@/components/ui";
 
 export default async function EditTripPage({ params }: PageProps<"/[locale]/fleet/trips/[id]/edit">) {
@@ -29,7 +31,10 @@ export default async function EditTripPage({ params }: PageProps<"/[locale]/flee
   ]);
   return (
     <>
-      <PageHeader title={`${d.common.edit}: ${d.fleet.tripsTitle}`} />
+      <PageHeader
+        title={`${d.common.edit}: ${d.fleet.tripsTitle}`}
+        actions={<DeleteButton action={deleteTrip} hidden={{ id: trip.id }} />}
+      />
       <Card>
         <TripForm
           trip={trip}

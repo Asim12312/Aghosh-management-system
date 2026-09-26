@@ -1,7 +1,7 @@
 "use client";
 
 import { changeDemandStatus } from "@/lib/actions/demands";
-import { issueAgainstDemand } from "@/lib/actions/inventory";
+import { issueAgainstDemand, issueAllForDemand } from "@/lib/actions/inventory";
 import { useI18n } from "@/lib/i18n/client";
 import { ActionForm, SubmitButton, useFormState } from "./forms";
 import { cx, inputCls } from "./ui";
@@ -47,6 +47,18 @@ export function IssueLineForm({ demandItemId, pending, today }: { demandItemId: 
     <ActionForm action={issueAgainstDemand} className="[&>div.mb-4]:mb-1 [&>div.mb-4]:text-xs">
       <input type="hidden" name="demand_item_id" value={demandItemId} />
       <IssueFields pending={pending} today={today} />
+    </ActionForm>
+  );
+}
+
+/** One click: issue every pending line (deducting stock) and mark the demand fulfilled. */
+export function IssueAllButton({ id, today }: { id: number; today: string }) {
+  const { d } = useI18n();
+  return (
+    <ActionForm action={issueAllForDemand} className="flex flex-wrap items-center justify-end gap-2 [&>div.mb-4]:mb-0 [&>div.mb-4]:w-full">
+      <input type="hidden" name="id" value={id} />
+      <input type="hidden" name="txn_date" value={today} />
+      <SubmitButton>{d.demands.issueAll}</SubmitButton>
     </ActionForm>
   );
 }

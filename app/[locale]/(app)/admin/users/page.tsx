@@ -28,6 +28,11 @@ export default async function UsersPage({ params, searchParams }: PageProps<"/[l
           <Alert tone="green">{d.common.saved}</Alert>
         </div>
       )}
+      {sp.deleted === "1" && (
+        <div className="mb-4">
+          <Alert tone="green">{d.common.deleted}</Alert>
+        </div>
+      )}
       <Card title={a.newUser} className="mb-6">
         <UserForm />
       </Card>

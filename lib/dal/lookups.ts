@@ -42,7 +42,7 @@ export const namedOptions = (rows: Named[], locale: Locale) => rows.map((r) => (
 export const itemOptions = (rows: ItemOption[], locale: Locale, withStock = true) =>
   rows.map((r) => ({
     value: r.id,
-    label: `${r.code} — ${nm(r, locale)}${withStock ? ` (${fmtNum(r.current_stock)} ${locale === "ur" ? r.unit_ur : r.unit_en})` : ""}`,
+    label: `${nm(r, locale)}${withStock ? ` (${fmtNum(r.current_stock)} ${locale === "ur" ? r.unit_ur : r.unit_en})` : ""}`,
   }));
 
 export const vehicleOptions = (rows: Awaited<ReturnType<typeof getVehicles>>) =>

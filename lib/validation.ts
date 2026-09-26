@@ -68,6 +68,11 @@ export const fail = (error: string, fieldErrors?: Record<string, string>): Actio
 });
 export const success = (message: string): ActionState => ({ ok: true, message, at: Date.now() });
 
+/** The row is still referenced by other records (Postgres foreign-key violation). */
+export function isForeignKeyViolation(err: unknown) {
+  return typeof err === "object" && err !== null && (err as { code?: string }).code === "23503";
+}
+
 /** Postgres unique-violation check that works for both pg and PGlite errors. */
 export function isUniqueViolation(err: unknown) {
   return typeof err === "object" && err !== null && (err as { code?: string }).code === "23505";

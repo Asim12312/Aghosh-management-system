@@ -5,7 +5,7 @@ import { getDepartments } from "@/lib/dal/lookups";
 import { statusTone, type DemandStatus } from "@/lib/dal/demands";
 import { fmtDate, fmtNum, getDictionary, nm, type Locale } from "@/lib/i18n";
 import { DueBadge } from "@/components/due-badge";
-import { Badge, buttonCls, Card, EmptyRow, inputCls, LinkButton, PageHeader, Table, Td, Th } from "@/components/ui";
+import { Alert, Badge, buttonCls, Card, EmptyRow, inputCls, LinkButton, PageHeader, Table, Td, Th } from "@/components/ui";
 
 const STATUSES: DemandStatus[] = ["draft", "submitted", "approved", "partially_fulfilled", "fulfilled", "cancelled"];
 
@@ -56,6 +56,11 @@ export default async function DemandsPage({ params, searchParams }: PageProps<"/
   return (
     <>
       <PageHeader title={t.title} subtitle={t.subtitle} actions={<LinkButton href={`/${locale}/demands/new`}>{t.new}</LinkButton>} />
+      {sp.deleted === "1" && (
+        <div className="mb-4">
+          <Alert tone="green">{d.common.deleted}</Alert>
+        </div>
+      )}
       <Card bodyClassName="p-0">
         <form className="flex flex-wrap items-end gap-3 border-b border-slate-200 p-4">
           <div>

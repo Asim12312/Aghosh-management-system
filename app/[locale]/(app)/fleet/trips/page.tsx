@@ -40,6 +40,11 @@ export default async function TripsPage({ params, searchParams }: PageProps<"/[l
         </div>
       )}
 
+      {sp.deleted === "1" && (
+        <div className="mb-4">
+          <Alert tone="green">{d.common.deleted}</Alert>
+        </div>
+      )}
       {open.length > 0 && (
         <Card title={d.dashboard.vehiclesOut} className="mb-6">
           <ul className="divide-y divide-slate-100">

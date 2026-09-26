@@ -1,11 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useState } from "react";
 import { useI18n } from "@/lib/i18n/client";
 import { LanguageToggle } from "./language-toggle";
 import { cx } from "./ui";
+import logo from "@/public/logo.webp";
 
 type NavItem = { href: string; label: string };
 type NavGroup = { label?: string; items: NavItem[] };
@@ -101,10 +103,13 @@ export function AppShell({
           !open && "max-lg:ltr:-translate-x-full max-lg:rtl:translate-x-full",
         )}
       >
-        <div className="border-b border-white/10 px-5 py-4">
-          <div className="text-base font-semibold text-white">{d.app.name}</div>
-          <div className="text-xs text-brand-100/70">{d.app.org}</div>
-        </div>
+        <Link href={p("/dashboard")} className="flex items-center gap-3 border-b border-white/10 px-4 py-4">
+          <Image src={logo} alt="" height={48} className="h-12 w-auto shrink-0 rounded-md bg-white p-0.5" priority />
+          <div className="min-w-0">
+            <div className="text-base font-semibold text-white">{d.app.name}</div>
+            <div className="text-xs leading-snug text-brand-100/70">{d.app.org}</div>
+          </div>
+        </Link>
         {nav}
       </aside>
       {open && <div className="no-print fixed inset-0 z-30 bg-slate-900/40 lg:hidden" onClick={() => setOpen(false)} />}

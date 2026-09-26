@@ -30,7 +30,9 @@ Set `SEED_DEMO_DATA=true` and the app fills an **empty** database (no users yet)
 | Admin | `admin` | `Admin@12345` |
 | Staff | `staff` | `Staff@12345` |
 
-You can also load it manually with `npm run db:seed-demo`. The data lives in [db/seed/demo.sql](db/seed/demo.sql). Before going live, remove `SEED_DEMO_DATA`, start with a fresh database, and create real accounts.
+You can also load it manually with `npm run db:seed-demo`. The data lives in [db/seed/demo.sql](db/seed/demo.sql). Demo data never loads on a Vercel **production** deployment (`VERCEL_ENV=production`), even if the variable is set. It still works locally and on preview deployments.
+
+To go live on a database that already contains demo data, run [db/scripts/clear-demo-data.sql](db/scripts/clear-demo-data.sql) once in the Neon SQL Editor. It deletes all users and operational data but keeps departments, sources, units, categories and settings. The app then shows **First-time setup** so you can create the real administrator.
 
 ## Deploying on Vercel
 

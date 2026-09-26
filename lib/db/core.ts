@@ -118,7 +118,8 @@ async function runMigrations(driver: Driver) {
       console.log(`[db] applied migration ${file}`);
     }
   });
-  if (process.env.SEED_DEMO_DATA === "true") {
+  // Demo data never loads on a Vercel production deployment, even if SEED_DEMO_DATA is left on.
+  if (process.env.SEED_DEMO_DATA === "true" && process.env.VERCEL_ENV !== "production") {
     const { seedDemoData } = await import("./seed-demo");
     await driver.transaction(async (q) => {
       await q.query("SELECT pg_advisory_xact_lock($1)", [MIGRATION_LOCK]);

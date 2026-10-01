@@ -7,7 +7,8 @@ import { ServiceWorkerRegister } from "@/components/pwa";
 import "../globals.css";
 
 const latin = Geist({ subsets: ["latin"] });
-const urdu = Noto_Nastaliq_Urdu({ subsets: ["arabic"], weight: ["400", "600", "700"] });
+// Not preloaded: the file is ~240 KB and English pages barely use it; it still loads as soon as Urdu text renders.
+const urdu = Noto_Nastaliq_Urdu({ subsets: ["arabic"], weight: ["400", "600", "700"], preload: false, display: "swap" });
 
 // Geist (Latin-only unicode-range) first, then Nastaliq for Urdu glyphs. Geist's generated fallback
 // font is left out on purpose: it maps to local Arial, which would render Urdu before Nastaliq.

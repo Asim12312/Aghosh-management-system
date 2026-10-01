@@ -1,10 +1,11 @@
 // Server-safe presentational components (no hooks).
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
 
 export const cx = (...classes: (string | false | null | undefined)[]) => classes.filter(Boolean).join(" ");
 
 export const inputCls =
-  "block w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20 disabled:bg-slate-100 aria-invalid:border-red-500";
+  "block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-base shadow-sm sm:py-1.5 sm:text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20 disabled:bg-slate-100 aria-invalid:border-red-500";
 
 const buttonVariants = {
   primary: "bg-brand-700 text-white hover:bg-brand-800 shadow-sm",
@@ -52,12 +53,12 @@ export function PageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900">{title}</h1>
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-3 sm:mb-6 sm:gap-4">
+      <div className="min-w-0">
+        <h1 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">{title}</h1>
         {subtitle && <p className="mt-1 text-sm text-slate-500">{subtitle}</p>}
       </div>
-      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>
   );
 }
@@ -78,9 +79,9 @@ export function Card({
   bodyClassName?: string;
 }) {
   return (
-    <section className={cx("rounded-lg border border-slate-200 bg-white shadow-sm", className)}>
+    <section className={cx("min-w-0 rounded-xl border border-slate-200 bg-white shadow-sm", className)}>
       {(title || actions) && (
-        <header className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 px-4 py-3">
+        <header className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 px-4 py-3 sm:px-5">
           <div>
             {title && <h2 className="font-semibold text-slate-800">{title}</h2>}
             {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
@@ -88,7 +89,7 @@ export function Card({
           {actions}
         </header>
       )}
-      <div className={cx("p-4", bodyClassName)}>{children}</div>
+      <div className={cx("p-4 sm:p-5", bodyClassName)}>{children}</div>
     </section>
   );
 }
@@ -104,7 +105,7 @@ export function Label({ htmlFor, children, hint }: { htmlFor?: string; children:
 
 export function Table({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className="overflow-x-auto print:overflow-visible">
+    <div className="max-w-full overflow-x-auto overscroll-x-contain print:overflow-visible">
       <table className={cx("w-full border-collapse text-sm", className)}>{children}</table>
     </div>
   );
@@ -186,7 +187,19 @@ export function Alert({ tone = "red", children }: { tone?: "red" | "green" | "am
   return <div className={cx("rounded-md border px-3 py-2 text-sm", cls)}>{children}</div>;
 }
 
-export function Stat({ label, value, tone = "gray", href }: { label: string; value: React.ReactNode; tone?: Tone; href?: string }) {
+export function Stat({
+  label,
+  value,
+  tone = "gray",
+  href,
+  icon: Icon,
+}: {
+  label: string;
+  value: React.ReactNode;
+  tone?: Tone;
+  href?: string;
+  icon?: LucideIcon;
+}) {
   const accent = {
     gray: "text-slate-900",
     green: "text-emerald-700",
@@ -195,10 +208,25 @@ export function Stat({ label, value, tone = "gray", href }: { label: string; val
     blue: "text-sky-700",
     violet: "text-violet-700",
   }[tone];
+  const iconBg = {
+    gray: "bg-slate-100 text-slate-600",
+    green: "bg-emerald-50 text-emerald-600",
+    red: "bg-red-50 text-red-600",
+    amber: "bg-amber-50 text-amber-600",
+    blue: "bg-sky-50 text-sky-600",
+    violet: "bg-violet-50 text-violet-600",
+  }[tone];
   const body = (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-brand-600/40">
-      <div className="text-sm text-slate-500">{label}</div>
-      <div className={cx("mt-1 text-2xl font-semibold tabular-nums", accent)}>{value}</div>
+    <div className="flex h-full items-start justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-600/40 hover:shadow">
+      <div className="min-w-0">
+        <div className="text-xs font-medium text-slate-500 sm:text-sm">{label}</div>
+        <div className={cx("mt-1 text-2xl font-semibold tabular-nums sm:text-3xl", accent)}>{value}</div>
+      </div>
+      {Icon && (
+        <div className={cx("hidden size-10 shrink-0 items-center justify-center rounded-lg sm:flex", iconBg)}>
+          <Icon className="size-5" aria-hidden />
+        </div>
+      )}
     </div>
   );
   return href ? <Link href={href}>{body}</Link> : body;

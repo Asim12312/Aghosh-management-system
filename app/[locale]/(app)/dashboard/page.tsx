@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AlertTriangle, ClipboardList, Package, Truck } from "lucide-react";
 import { requireUser } from "@/lib/dal/auth";
 import { one, query } from "@/lib/db";
 import { getTrips } from "@/lib/dal/fleet";
@@ -85,14 +86,14 @@ export default async function DashboardPage({ params, searchParams }: PageProps<
         </div>
       )}
 
-      <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Stat label={t.kpiItems} value={fmtNum(kpi?.items)} href={`/${locale}/inventory/items`} />
-        <Stat label={t.kpiAlerts} value={fmtNum(alerts.length)} tone={alerts.length ? "red" : "green"} href="#stock-alerts" />
-        <Stat label={t.kpiDemands} value={fmtNum(kpi?.open_demands)} tone="violet" href={`/${locale}/demands`} />
-        <Stat label={t.kpiKmMonth} value={fmtKm(kpi?.km_month)} tone="blue" href={`/${locale}/fleet/trips?from=${monthStart}`} />
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <Stat label={t.kpiItems} value={fmtNum(kpi?.items)} href={`/${locale}/inventory/items`} icon={Package} />
+        <Stat label={t.kpiAlerts} value={fmtNum(alerts.length)} tone={alerts.length ? "red" : "green"} href="#stock-alerts" icon={AlertTriangle} />
+        <Stat label={t.kpiDemands} value={fmtNum(kpi?.open_demands)} tone="violet" href={`/${locale}/demands`} icon={ClipboardList} />
+        <Stat label={t.kpiKmMonth} value={fmtKm(kpi?.km_month)} tone="blue" href={`/${locale}/fleet/trips?from=${monthStart}`} icon={Truck} />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 xl:grid-cols-2">
         <Card
           title={t.stockAlerts}
           subtitle={fmt(t.stockAlertsHint, { n: horizon })}

@@ -13,9 +13,19 @@
   --color-brand-900: #134e4a;
 }
 
+html {
+  -webkit-tap-highlight-color: transparent;
+  text-size-adjust: 100%;
+}
+
 body {
   background: #f8fafc;
   color: #0f172a;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand-600);
+  outline-offset: 2px;
 }
 
 /* Nastaliq needs extra vertical room. */

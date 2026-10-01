@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#134e4a" />
+    <title>Offline · Aghosh MIS</title>
+    <style>
+      :root { color-scheme: light; }
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f8fafc; color: #0f172a;
+             font-family: system-ui, -apple-system, "Segoe UI", sans-serif; padding: 16px; box-sizing: border-box; }
+      main { max-width: 360px; text-align: center; }
+      img { width: 88px; height: auto; border-radius: 12px; }
+      h1 { font-size: 20px; margin: 16px 0 4px; }
+      p { margin: 4px 0; color: #475569; line-height: 1.6; }
+      .ur { direction: rtl; font-size: 17px; }
+      button { margin-top: 20px; padding: 10px 18px; border: 0; border-radius: 8px; background: #0f766e; color: #fff;
+               font-size: 15px; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="/logo.webp" alt="Aghosh" />
+      <h1>You are offline</h1>
+      <p>Aghosh MIS needs an internet connection. Check your connection and try again.</p>
+      <p class="ur">آپ آف لائن ہیں۔ آغوش ایم آئی ایس کے لیے انٹرنیٹ ضروری ہے۔ کنکشن چیک کر کے دوبارہ کوشش کریں۔</p>
+      <button onclick="location.reload()">Try again · دوبارہ کوشش کریں</button>
+    </main>
+  </body>
+</html>

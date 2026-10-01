@@ -56,6 +56,7 @@ const en = {
     showing: "Showing {n} records",
     unexpectedError: "Something went wrong. Please try again.",
     delete: "Delete",
+    installApp: "Install app",
     deleteConfirm: "Delete this record permanently? This cannot be undone.",
     deleted: "Deleted successfully.",
     inUse: "This record is already used in other entries, so it can't be deleted. Mark it inactive instead.",

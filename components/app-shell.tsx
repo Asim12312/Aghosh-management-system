@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Suspense, useState } from "react";
 import { useI18n } from "@/lib/i18n/client";
 import { LanguageToggle } from "./language-toggle";
+import { InstallAppButton } from "./pwa";
 import { cx } from "./ui";
 import logo from "@/public/logo.webp";
 
@@ -129,6 +130,7 @@ export function AppShell({
               <div className="font-medium text-slate-800">{user.full_name}</div>
               <div className="text-xs text-slate-500">{d.roles[user.role]}</div>
             </div>
+            <InstallAppButton />
             <Suspense>
               <LanguageToggle />
             </Suspense>

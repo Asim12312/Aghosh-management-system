@@ -11,6 +11,7 @@ import {
   Car,
   ClipboardList,
   Database,
+  FileUp,
   Fuel,
   History,
   LayoutDashboard,
@@ -90,7 +91,12 @@ export function AppShell({
         { href: p("/master/drivers"), label: d.nav.drivers, icon: UserRound },
       ],
     },
-    { items: [{ href: p("/reports"), label: d.nav.reports, icon: BarChart3 }] },
+    {
+      items: [
+        { href: p("/reports"), label: d.nav.reports, icon: BarChart3 },
+        { href: p("/import"), label: d.nav.import, icon: FileUp },
+      ],
+    },
     ...(isAdmin
       ? [
           {

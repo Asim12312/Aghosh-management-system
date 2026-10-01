@@ -49,6 +49,7 @@ To go live on a database that already contains demo data, run [db/scripts/clear-
 | Demand sheets | Draft → submitted → approved (admin) → partially fulfilled / fulfilled; quantities split by Boys and Girls; stock issued from the sheet; printable demand form |
 | Fleet | Start and close trips (vehicle, driver, department, purpose, time out/in, start/end km; km driven is calculated); a vehicle can have only one open trip; odometer continuity check; fuel log for km/litre |
 | Reports | Stock summary, item ledger, receipts by source, consumption by department, low stock, demand status, trip log, vehicle usage & mileage, km by department. Filters: date range, vehicle, department, km range, item, category, source, status. Every report can be printed (A4, letterhead, filters, signature lines) or exported to CSV |
+| Excel import | Download a template (with dropdowns of valid values), fill it in, and upload it to bulk-add items, stock received, stock issued, trips, vendors, vehicles or drivers. Every row is checked first; if any row has a problem, nothing is imported and the rows to fix are listed |
 | Administration | Users and roles, master data (categories, units, vendors, departments, sources, vehicles, drivers), alert settings, audit log |
 
 **Roles.** An **Admin** has full access. **Staff / Manager** covers day-to-day work: receive and issue stock, create demands, log trips and fuel, and run reports. Staff can't adjust or void stock entries, approve demands, edit closed trips, change item minimum levels, or manage users, master data or settings.
